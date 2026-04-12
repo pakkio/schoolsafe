@@ -1,0 +1,2138 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SchoolSafe — Simulazione Evacuazione Scolastica</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background: #1a1a2e;
+  color: #e0e0e0;
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+#sidebar {
+  width: 280px;
+  min-width: 280px;
+  background: #16213e;
+  border-right: 2px solid #0f3460;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+#sidebar h1 {
+  font-family: 'Courier New', monospace;
+  font-size: 22px;
+  color: #e94560;
+  text-align: center;
+  margin-bottom: 4px;
+  letter-spacing: 2px;
+}
+
+#sidebar .subtitle {
+  font-size: 11px;
+  color: #888;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.phase-info {
+  background: #0f3460;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.phase-info h3 {
+  color: #e94560;
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+
+.btn {
+  display: block;
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 8px;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.btn:hover { transform: translateY(-1px); }
+.btn:active { transform: translateY(0); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+.btn-primary {
+  background: #e94560;
+  color: white;
+}
+.btn-primary:hover:not(:disabled) { background: #d63851; }
+
+.btn-secondary {
+  background: #0f3460;
+  color: #e0e0e0;
+  border: 1px solid #1a4a8a;
+}
+.btn-secondary:hover:not(:disabled) { background: #1a4a8a; }
+
+.btn-event {
+  padding: 8px 12px;
+  font-size: 13px;
+  display: inline-block;
+  width: 48%;
+}
+.btn-fire { background: #dc2626; color: white; }
+.btn-fire:hover { background: #b91c1c; }
+.btn-earthquake { background: #d97706; color: white; }
+.btn-earthquake:hover { background: #b45309; }
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin: 8px 0;
+}
+
+.stat-box {
+  background: #0a1628;
+  border-radius: 6px;
+  padding: 8px;
+  text-align: center;
+}
+
+.stat-box .label {
+  font-size: 10px;
+  color: #888;
+  text-transform: uppercase;
+}
+
+.stat-box .value {
+  font-family: 'Courier New', monospace;
+  font-size: 18px;
+  font-weight: bold;
+  color: #e0e0e0;
+}
+
+.stat-box .value.green { color: #22c55e; }
+.stat-box .value.yellow { color: #f59e0b; }
+.stat-box .value.red { color: #ef4444; }
+.stat-box .value.blue { color: #3b82f6; }
+
+.furniture-selector {
+  display: flex;
+  gap: 4px;
+  margin: 8px 0;
+}
+
+.furniture-btn {
+  flex: 1;
+  padding: 8px 4px;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  background: #0a1628;
+  color: #e0e0e0;
+  cursor: pointer;
+  font-size: 11px;
+  text-align: center;
+  transition: border-color 0.2s;
+}
+
+.furniture-btn.active {
+  border-color: #e94560;
+  background: #1a0a14;
+}
+
+.furniture-btn:hover { border-color: #e94560; }
+
+.room-list {
+  font-size: 12px;
+  max-height: 120px;
+  overflow-y: auto;
+  background: #0a1628;
+  border-radius: 6px;
+  padding: 8px;
+  margin: 8px 0;
+}
+
+.room-list div {
+  padding: 2px 0;
+  border-bottom: 1px solid #162040;
+}
+
+.speed-controls {
+  display: flex;
+  gap: 4px;
+  margin: 8px 0;
+}
+
+.speed-btn {
+  flex: 1;
+  padding: 6px;
+  border: 1px solid #1a4a8a;
+  border-radius: 4px;
+  background: #0a1628;
+  color: #e0e0e0;
+  cursor: pointer;
+  font-size: 12px;
+  text-align: center;
+}
+
+.speed-btn.active {
+  background: #0f3460;
+  border-color: #e94560;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 6px;
+  background: #0a1628;
+  border-radius: 3px;
+  margin: 8px 0;
+  overflow: hidden;
+}
+
+.progress-bar .fill {
+  height: 100%;
+  background: #22c55e;
+  transition: width 0.1s;
+  border-radius: 3px;
+}
+
+.legend {
+  font-size: 11px;
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid #0f3460;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+#game-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #111827;
+  position: relative;
+}
+
+#gameCanvas {
+  border: 2px solid #0f3460;
+  cursor: default;
+}
+
+/* Scheda risultati */
+#results-overlay {
+  display: none;
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.75);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+}
+
+#results-overlay.visible {
+  display: flex;
+}
+
+#results-card {
+  background: #16213e;
+  border: 2px solid #0f3460;
+  border-radius: 12px;
+  padding: 28px 32px;
+  min-width: 380px;
+  max-width: 460px;
+  font-family: 'Courier New', monospace;
+  color: #e0e0e0;
+}
+
+#results-card h2 {
+  text-align: center;
+  color: #e94560;
+  margin-bottom: 16px;
+  font-size: 18px;
+  letter-spacing: 2px;
+}
+
+#results-card .divider {
+  border: none;
+  border-top: 1px solid #0f3460;
+  margin: 12px 0;
+}
+
+#results-card .stat-line {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: 14px;
+}
+
+#results-card .score-line {
+  text-align: center;
+  font-size: 22px;
+  font-weight: bold;
+  padding: 8px 0;
+}
+
+#results-card .suggestions {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #aaa;
+}
+
+#results-card .btn-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+#results-card .btn-row .btn {
+  flex: 1;
+}
+</style>
+</head>
+<body>
+
+<div id="sidebar">
+  <h1>SCHOOLSAFE</h1>
+  <div class="subtitle">Simulazione Evacuazione Scolastica</div>
+  <div id="sidebar-content"></div>
+  <div class="legend" id="legend-area"></div>
+</div>
+
+<div id="game-area">
+  <canvas id="gameCanvas"></canvas>
+  <div id="results-overlay">
+    <div id="results-card"></div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// CONFIG - Costanti globali
+// ============================================================
+const CONFIG = {
+  GRID_COLS: 52,
+  GRID_ROWS: 36,
+  CELL_SIZE: 18,
+  MAX_OCCUPANCY_FLOOR: 2,
+  MAX_OCCUPANCY_DOOR: 1,
+  MAX_TICKS: 300,
+  TICK_MS: 120,
+  FIRE_SPREAD_INTERVAL: 10,
+  EARTHQUAKE_INTERVAL: 20,
+  MIN_EXITS: 2,
+  MAX_EXITS: 6,
+  COLORS: {
+    WALL:      '#2C2C2A',
+    FLOOR:     '#F5F3EE',
+    CORRIDOR:  '#EAE8E0',
+    CLASSROOM: '#EEF2F7',
+    BATHROOM:  '#EFF7EE',
+    STAIRWELL: '#F7F3EE',
+    OFFICE:    '#FFF7ED',
+    ENTRANCE:  '#FEF3C7',
+    DOOR:      '#8B6F47',
+    EXIT:      '#22C55E',
+    DESK:      '#B45309',
+    CHAIR:     '#6D4C2A',
+    WARDROBE:  '#4A3728',
+    FIRE:      '#EF4444',
+    RUBBLE:    '#78716C',
+    GRID_LINE: 'rgba(0,0,0,0.07)',
+    GRID_MAJOR:'rgba(0,0,0,0.12)',
+    PERIMETER_HIGHLIGHT: 'rgba(34,197,94,0.3)',
+  }
+};
+
+// ============================================================
+// Tipi di cella e stanza
+// ============================================================
+const CellType = {
+  WALL:'WALL', FLOOR:'FLOOR', DOOR:'DOOR', EXIT:'EXIT',
+  DESK:'DESK', CHAIR:'CHAIR', WARDROBE:'WARDROBE',
+  FIRE:'FIRE', RUBBLE:'RUBBLE'
+};
+
+const RoomType = {
+  CLASSROOM:'CLASSROOM', CORRIDOR:'CORRIDOR',
+  BATHROOM:'BATHROOM', STAIRWELL:'STAIRWELL',
+  ENTRANCE:'ENTRANCE', OFFICE:'OFFICE'
+};
+
+// ============================================================
+// GRID - Struttura dati della planimetria
+// ============================================================
+class Grid {
+  constructor(cols, rows) {
+    this.cols = cols;
+    this.rows = rows;
+    this.cells = [];
+    this.occupancy = new Map();
+    this.rooms = [];
+    for (let r = 0; r < rows; r++) {
+      this.cells[r] = [];
+      for (let c = 0; c < cols; c++) {
+        this.cells[r][c] = { type: CellType.WALL, roomType: null, roomId: -1, furniture: null };
+      }
+    }
+  }
+
+  getCell(col, row) {
+    if (col < 0 || col >= this.cols || row < 0 || row >= this.rows) return null;
+    return this.cells[row][col];
+  }
+
+  setCell(col, row, type, roomType, roomId) {
+    if (col < 0 || col >= this.cols || row < 0 || row >= this.rows) return;
+    const cell = this.cells[row][col];
+    cell.type = type;
+    if (roomType !== undefined) cell.roomType = roomType;
+    if (roomId !== undefined) cell.roomId = roomId;
+  }
+
+  isWalkable(col, row) {
+    const cell = this.getCell(col, row);
+    if (!cell) return false;
+    const t = cell.type;
+    return (t === CellType.FLOOR || t === CellType.DOOR || t === CellType.EXIT || t === CellType.CHAIR);
+  }
+
+  isPerimeter(col, row) {
+    return col === 0 || col === this.cols - 1 || row === 0 || row === this.rows - 1;
+  }
+
+  // Controlla se la cella e' un muro sul bordo con un floor adiacente internamente
+  isPerimeterWall(col, row) {
+    const cell = this.getCell(col, row);
+    if (!cell || cell.type !== CellType.WALL) return false;
+    // Deve essere sul bordo o a 1 cella dal bordo
+    if (col <= 1 || col >= this.cols - 2 || row <= 1 || row >= this.rows - 2) {
+      // Deve avere almeno un FLOOR adiacente verso l'interno
+      const neighbors = this.getNeighbors4(col, row);
+      return neighbors.some(n => {
+        const nc = this.getCell(n.col, n.row);
+        return nc && (nc.type === CellType.FLOOR || nc.type === CellType.CORRIDOR ||
+                      nc.roomType === RoomType.CORRIDOR);
+      });
+    }
+    return false;
+  }
+
+  getNeighbors4(col, row) {
+    const result = [];
+    if (col > 0) result.push({ col: col - 1, row });
+    if (col < this.cols - 1) result.push({ col: col + 1, row });
+    if (row > 0) result.push({ col, row: row - 1 });
+    if (row < this.rows - 1) result.push({ col, row: row + 1 });
+    return result;
+  }
+
+  addOccupant(col, row, studentId) {
+    const key = `${col},${row}`;
+    if (!this.occupancy.has(key)) this.occupancy.set(key, new Set());
+    this.occupancy.get(key).add(studentId);
+  }
+
+  removeOccupant(col, row, studentId) {
+    const key = `${col},${row}`;
+    const s = this.occupancy.get(key);
+    if (s) { s.delete(studentId); if (s.size === 0) this.occupancy.delete(key); }
+  }
+
+  getOccupancy(col, row) {
+    return this.occupancy.get(`${col},${row}`) || new Set();
+  }
+
+  getMaxOccupancy(col, row) {
+    const cell = this.getCell(col, row);
+    if (!cell) return 0;
+    if (cell.type === CellType.DOOR) return CONFIG.MAX_OCCUPANCY_DOOR;
+    return CONFIG.MAX_OCCUPANCY_FLOOR;
+  }
+}
+
+// ============================================================
+// FLOORPLAN GENERATOR - Generazione BSP con logica scolastica
+// ============================================================
+class FloorPlanGenerator {
+  constructor() {
+    this.roomIdCounter = 0;
+  }
+
+  generate() {
+    // Tentativi multipli per garantire connettivita
+    for (let attempt = 0; attempt < 8; attempt++) {
+      const grid = new Grid(CONFIG.GRID_COLS, CONFIG.GRID_ROWS);
+      this.roomIdCounter = 0;
+      this.generatedRooms = [];
+
+      // 1. Genera corridoi
+      this.generateCorridors(grid);
+
+      // 2. BSP split per generare stanze
+      const bounds = {
+        x: 1, y: 1,
+        w: CONFIG.GRID_COLS - 2,
+        h: CONFIG.GRID_ROWS - 2
+      };
+      this.splitRegion(grid, bounds, 0, 4);
+
+      // 3. Piazza porte
+      this.placeDoors(grid);
+
+      // 4. Assegna tipi scolastici
+      this.assignRoomTypes(grid);
+
+      // 5. Valida connettivita
+      if (this.validateConnectivity(grid)) {
+        grid.rooms = this.generatedRooms;
+        console.log(`Planimetria generata al tentativo ${attempt + 1} con ${this.generatedRooms.length} stanze`);
+        return grid;
+      }
+    }
+    // Fallback: ritorna l'ultimo tentativo
+    const grid = new Grid(CONFIG.GRID_COLS, CONFIG.GRID_ROWS);
+    this.roomIdCounter = 0;
+    this.generatedRooms = [];
+    this.generateCorridors(grid);
+    const bounds = { x: 1, y: 1, w: CONFIG.GRID_COLS - 2, h: CONFIG.GRID_ROWS - 2 };
+    this.splitRegion(grid, bounds, 0, 3);
+    this.placeDoors(grid);
+    this.assignRoomTypes(grid);
+    grid.rooms = this.generatedRooms;
+    return grid;
+  }
+
+  generateCorridors(grid) {
+    const cols = CONFIG.GRID_COLS;
+    const rows = CONFIG.GRID_ROWS;
+
+    // Corridoio principale orizzontale (3 celle di larghezza)
+    const mainY = Math.floor(rows * (0.42 + Math.random() * 0.16));
+    this.mainCorridorY = mainY;
+    for (let c = 1; c < cols - 1; c++) {
+      for (let dy = 0; dy < 3; dy++) {
+        if (mainY + dy < rows - 1) {
+          grid.setCell(c, mainY + dy, CellType.FLOOR, RoomType.CORRIDOR, -2);
+        }
+      }
+    }
+
+    // Corridoio secondario (60% probabilita)
+    this.hasSecondary = Math.random() > 0.4;
+    if (this.hasSecondary) {
+      const secY = Math.floor(rows * (0.15 + Math.random() * 0.15));
+      this.secondaryCorridorY = secY;
+      for (let c = 1; c < cols - 1; c++) {
+        for (let dy = 0; dy < 2; dy++) {
+          if (secY + dy > 0 && secY + dy < rows - 1) {
+            grid.setCell(c, secY + dy, CellType.FLOOR, RoomType.CORRIDOR, -2);
+          }
+        }
+      }
+    }
+
+    // Corridoi verticali laterali
+    const leftX = Math.floor(cols * 0.2);
+    const rightX = Math.floor(cols * 0.8);
+    this.vertCorridors = [leftX, rightX];
+    for (const vx of [leftX, rightX]) {
+      for (let r = 1; r < rows - 1; r++) {
+        grid.setCell(vx, r, CellType.FLOOR, RoomType.CORRIDOR, -2);
+        if (vx + 1 < cols - 1) {
+          grid.setCell(vx + 1, r, CellType.FLOOR, RoomType.CORRIDOR, -2);
+        }
+      }
+    }
+  }
+
+  splitRegion(grid, region, depth, maxDepth) {
+    const { x, y, w, h } = region;
+    if (w < 6 || h < 5) return;
+    if (depth >= maxDepth || (w < 10 && h < 8)) {
+      this.createRoom(grid, region);
+      return;
+    }
+
+    const preferH = h > w * 1.2;
+    const preferV = w > h * 1.2;
+    let horizontal;
+    if (preferH) horizontal = true;
+    else if (preferV) horizontal = false;
+    else horizontal = Math.random() > 0.5;
+
+    if (horizontal) {
+      if (h < 12) { this.createRoom(grid, region); return; }
+      const splitRatio = 0.35 + Math.random() * 0.3;
+      const splitY = y + Math.floor(h * splitRatio);
+      this.splitRegion(grid, { x, y, w, h: splitY - y }, depth + 1, maxDepth);
+      this.splitRegion(grid, { x, y: splitY, w, h: h - (splitY - y) }, depth + 1, maxDepth);
+    } else {
+      if (w < 12) { this.createRoom(grid, region); return; }
+      const splitRatio = 0.35 + Math.random() * 0.3;
+      const splitX = x + Math.floor(w * splitRatio);
+      this.splitRegion(grid, { x, y, w: splitX - x, h }, depth + 1, maxDepth);
+      this.splitRegion(grid, { x: splitX, y, w: w - (splitX - x), h }, depth + 1, maxDepth);
+    }
+  }
+
+  createRoom(grid, region) {
+    const { x, y, w, h } = region;
+    // Margine di 1 per i muri
+    const rx = x + 1, ry = y + 1;
+    const rw = w - 2, rh = h - 2;
+    if (rw < 3 || rh < 3) return;
+
+    // Non sovrascrivere i corridoi: controlla se l'area e' gia un corridoio
+    let corridorCells = 0;
+    let totalCells = 0;
+    for (let r = ry; r < ry + rh && r < CONFIG.GRID_ROWS - 1; r++) {
+      for (let c = rx; c < rx + rw && c < CONFIG.GRID_COLS - 1; c++) {
+        totalCells++;
+        const cell = grid.getCell(c, r);
+        if (cell && cell.roomType === RoomType.CORRIDOR) corridorCells++;
+      }
+    }
+    // Se piu del 40% e' gia corridoio, non creare la stanza
+    if (corridorCells / totalCells > 0.4) return;
+
+    const roomId = this.roomIdCounter++;
+    const room = {
+      id: roomId, type: RoomType.CLASSROOM,
+      x: rx, y: ry, width: rw, height: rh,
+      seats: [], door: null
+    };
+
+    // Scava il pavimento della stanza (senza toccare i corridoi)
+    for (let r = ry; r < ry + rh && r < CONFIG.GRID_ROWS - 1; r++) {
+      for (let c = rx; c < rx + rw && c < CONFIG.GRID_COLS - 1; c++) {
+        const cell = grid.getCell(c, r);
+        if (cell && cell.roomType !== RoomType.CORRIDOR) {
+          grid.setCell(c, r, CellType.FLOOR, null, roomId);
+        }
+      }
+    }
+
+    this.generatedRooms.push(room);
+  }
+
+  placeDoors(grid) {
+    for (const room of this.generatedRooms) {
+      let doorPlaced = false;
+
+      // Cerca muri della stanza adiacenti a corridoi
+      const candidates = [];
+
+      // Bordo superiore
+      for (let c = room.x; c < room.x + room.width; c++) {
+        if (this.isDoorCandidate(grid, c, room.y - 1, c, room.y, room.id)) {
+          candidates.push({ wallCol: c, wallRow: room.y - 1, floorCol: c, floorRow: room.y });
+        }
+      }
+      // Bordo inferiore
+      for (let c = room.x; c < room.x + room.width; c++) {
+        const br = room.y + room.height;
+        if (this.isDoorCandidate(grid, c, br, c, br - 1, room.id)) {
+          candidates.push({ wallCol: c, wallRow: br, floorCol: c, floorRow: br - 1 });
+        }
+      }
+      // Bordo sinistro
+      for (let r = room.y; r < room.y + room.height; r++) {
+        if (this.isDoorCandidate(grid, room.x - 1, r, room.x, r, room.id)) {
+          candidates.push({ wallCol: room.x - 1, wallRow: r, floorCol: room.x, floorRow: r });
+        }
+      }
+      // Bordo destro
+      for (let r = room.y; r < room.y + room.height; r++) {
+        const br = room.x + room.width;
+        if (this.isDoorCandidate(grid, br, r, br - 1, r, room.id)) {
+          candidates.push({ wallCol: br, wallRow: r, floorCol: br - 1, floorRow: r });
+        }
+      }
+
+      if (candidates.length > 0) {
+        // Preferisci porte verso il corridoio principale
+        const mainCandidates = candidates.filter(c => {
+          const cell = grid.getCell(c.wallCol, c.wallRow);
+          return cell && cell.roomType === RoomType.CORRIDOR;
+        });
+        const pool = mainCandidates.length > 0 ? mainCandidates : candidates;
+        // Scegli un candidato verso il centro del muro
+        const mid = pool[Math.floor(pool.length / 2)];
+        grid.setCell(mid.wallCol, mid.wallRow, CellType.DOOR, RoomType.CORRIDOR, room.id);
+        room.door = { col: mid.wallCol, row: mid.wallRow };
+        doorPlaced = true;
+      }
+
+      if (!doorPlaced) {
+        // Forza una porta: trova la cella di corridoio piu vicina e scava
+        this.forceDoor(grid, room);
+      }
+    }
+  }
+
+  isDoorCandidate(grid, wallCol, wallRow, floorCol, floorRow, roomId) {
+    const wallCell = grid.getCell(wallCol, wallRow);
+    const floorCell = grid.getCell(floorCol, floorRow);
+    if (!wallCell || !floorCell) return false;
+    // Il muro deve essere WALL o CORRIDOR (adiacente)
+    // Il floor deve appartenere alla stanza
+    if (floorCell.roomId !== roomId) return false;
+    // L'altro lato del muro deve avere un corridoio
+    if (wallCell.type === CellType.WALL) {
+      // Controlla se dal lato opposto c'e' un corridoio
+      const oppositeCol = wallCol + (wallCol - floorCol);
+      const oppositeRow = wallRow + (wallRow - floorRow);
+      const oppCell = grid.getCell(oppositeCol, oppositeRow);
+      if (oppCell && oppCell.roomType === RoomType.CORRIDOR) return true;
+    }
+    if (wallCell.roomType === RoomType.CORRIDOR) return true;
+    return false;
+  }
+
+  forceDoor(grid, room) {
+    // Cerca la cella corridoio piu vicina al centro della stanza
+    const cx = room.x + Math.floor(room.width / 2);
+    const cy = room.y + Math.floor(room.height / 2);
+    let bestDist = Infinity;
+    let bestCorr = null;
+
+    for (let r = 1; r < CONFIG.GRID_ROWS - 1; r++) {
+      for (let c = 1; c < CONFIG.GRID_COLS - 1; c++) {
+        const cell = grid.getCell(c, r);
+        if (cell && cell.roomType === RoomType.CORRIDOR) {
+          const d = Math.abs(c - cx) + Math.abs(r - cy);
+          if (d < bestDist) { bestDist = d; bestCorr = { col: c, row: r }; }
+        }
+      }
+    }
+
+    if (bestCorr) {
+      // Scava un percorso dal bordo stanza verso il corridoio
+      let sc = cx, sr = cy;
+      const tc = bestCorr.col, tr = bestCorr.row;
+      // Cammina prima orizzontalmente, poi verticalmente
+      const path = [];
+      while (sc !== tc) { sc += sc < tc ? 1 : -1; path.push({ col: sc, row: sr }); }
+      while (sr !== tr) { sr += sr < tr ? 1 : -1; path.push({ col: sc, row: sr }); }
+      let doorSet = false;
+      for (const p of path) {
+        const cell = grid.getCell(p.col, p.row);
+        if (cell && cell.type === CellType.WALL) {
+          if (!doorSet) {
+            grid.setCell(p.col, p.row, CellType.DOOR, null, room.id);
+            room.door = { col: p.col, row: p.row };
+            doorSet = true;
+          } else {
+            grid.setCell(p.col, p.row, CellType.FLOOR, RoomType.CORRIDOR, -2);
+          }
+        }
+      }
+    }
+  }
+
+  assignRoomTypes(grid) {
+    // Ordina per area decrescente
+    const rooms = [...this.generatedRooms];
+    rooms.sort((a, b) => (b.width * b.height) - (a.width * a.height));
+
+    let bathroomCount = 0;
+    let officeCount = 0;
+
+    for (let i = 0; i < rooms.length; i++) {
+      const room = rooms[i];
+      const area = room.width * room.height;
+
+      if (i === 0 && room.y + room.height > CONFIG.GRID_ROWS * 0.7) {
+        room.type = RoomType.ENTRANCE;
+      } else if (area < 15 && bathroomCount < 3) {
+        room.type = RoomType.BATHROOM;
+        bathroomCount++;
+      } else if (area < 20 && officeCount < 2 && room.x < CONFIG.GRID_COLS * 0.3) {
+        room.type = RoomType.OFFICE;
+        officeCount++;
+      } else if ((room.x < 5 || room.x + room.width > CONFIG.GRID_COLS - 5) && area < 20) {
+        room.type = RoomType.STAIRWELL;
+      } else {
+        room.type = RoomType.CLASSROOM;
+      }
+
+      // Aggiorna celle
+      for (let r = room.y; r < room.y + room.height; r++) {
+        for (let c = room.x; c < room.x + room.width; c++) {
+          const cell = grid.getCell(c, r);
+          if (cell && cell.roomId === room.id) {
+            cell.roomType = room.type;
+          }
+        }
+      }
+    }
+  }
+
+  validateConnectivity(grid) {
+    // Flood-fill da un punto FLOOR
+    let startCol = -1, startRow = -1;
+    for (let r = 0; r < CONFIG.GRID_ROWS && startCol < 0; r++) {
+      for (let c = 0; c < CONFIG.GRID_COLS && startCol < 0; c++) {
+        const cell = grid.getCell(c, r);
+        if (cell && (cell.type === CellType.FLOOR || cell.type === CellType.DOOR)) {
+          startCol = c; startRow = r;
+        }
+      }
+    }
+    if (startCol < 0) return false;
+
+    const visited = new Set();
+    const queue = [{ col: startCol, row: startRow }];
+    visited.add(`${startCol},${startRow}`);
+
+    while (queue.length > 0) {
+      const { col, row } = queue.shift();
+      for (const n of grid.getNeighbors4(col, row)) {
+        const key = `${n.col},${n.row}`;
+        if (visited.has(key)) continue;
+        const cell = grid.getCell(n.col, n.row);
+        if (cell && (cell.type === CellType.FLOOR || cell.type === CellType.DOOR)) {
+          visited.add(key);
+          queue.push(n);
+        }
+      }
+    }
+
+    // Verifica che almeno l'80% delle stanze sia raggiungibile
+    let reachable = 0;
+    for (const room of this.generatedRooms) {
+      const cc = room.x + Math.floor(room.width / 2);
+      const cr = room.y + Math.floor(room.height / 2);
+      if (visited.has(`${cc},${cr}`)) reachable++;
+    }
+
+    return reachable >= this.generatedRooms.length * 0.7;
+  }
+}
+
+// ============================================================
+// MIN-HEAP per A*
+// ============================================================
+class MinHeap {
+  constructor() { this.heap = []; }
+
+  push(item) {
+    this.heap.push(item);
+    this._bubbleUp(this.heap.length - 1);
+  }
+
+  pop() {
+    if (this.heap.length === 0) return null;
+    const top = this.heap[0];
+    const last = this.heap.pop();
+    if (this.heap.length > 0) {
+      this.heap[0] = last;
+      this._sinkDown(0);
+    }
+    return top;
+  }
+
+  _bubbleUp(i) {
+    while (i > 0) {
+      const parent = (i - 1) >> 1;
+      if (this.heap[i].f < this.heap[parent].f) {
+        [this.heap[i], this.heap[parent]] = [this.heap[parent], this.heap[i]];
+        i = parent;
+      } else break;
+    }
+  }
+
+  _sinkDown(i) {
+    const len = this.heap.length;
+    while (true) {
+      let smallest = i;
+      const l = 2 * i + 1, r = 2 * i + 2;
+      if (l < len && this.heap[l].f < this.heap[smallest].f) smallest = l;
+      if (r < len && this.heap[r].f < this.heap[smallest].f) smallest = r;
+      if (smallest !== i) {
+        [this.heap[i], this.heap[smallest]] = [this.heap[smallest], this.heap[i]];
+        i = smallest;
+      } else break;
+    }
+  }
+
+  get size() { return this.heap.length; }
+}
+
+// ============================================================
+// PATHFINDER - A* con costo congestione
+// ============================================================
+class PathFinder {
+  findPath(grid, startCol, startRow, goalCol, goalRow) {
+    const open = new MinHeap();
+    const gScore = new Map();
+    const cameFrom = new Map();
+    const startKey = `${startCol},${startRow}`;
+    const goalKey = `${goalCol},${goalRow}`;
+
+    gScore.set(startKey, 0);
+    open.push({ col: startCol, row: startRow, f: this.heuristic(startCol, startRow, goalCol, goalRow) });
+
+    const closedSet = new Set();
+
+    while (open.size > 0) {
+      const current = open.pop();
+      const curKey = `${current.col},${current.row}`;
+
+      if (curKey === goalKey) {
+        return this.reconstructPath(cameFrom, goalKey);
+      }
+
+      if (closedSet.has(curKey)) continue;
+      closedSet.add(curKey);
+
+      for (const n of grid.getNeighbors4(current.col, current.row)) {
+        const nKey = `${n.col},${n.row}`;
+        if (closedSet.has(nKey)) continue;
+
+        if (!grid.isWalkable(n.col, n.row) && grid.getCell(n.col, n.row)?.type !== CellType.EXIT) continue;
+
+        // Costo con congestione
+        const occ = grid.getOccupancy(n.col, n.row).size;
+        const max = grid.getMaxOccupancy(n.col, n.row);
+        const cost = 1.0 + (max > 0 ? (occ / max) * 2.0 : 0);
+
+        const tentG = (gScore.get(curKey) || 0) + cost;
+        if (tentG < (gScore.get(nKey) || Infinity)) {
+          gScore.set(nKey, tentG);
+          cameFrom.set(nKey, curKey);
+          open.push({ col: n.col, row: n.row, f: tentG + this.heuristic(n.col, n.row, goalCol, goalRow) });
+        }
+      }
+    }
+    return null;
+  }
+
+  heuristic(c1, r1, c2, r2) {
+    return Math.abs(c1 - c2) + Math.abs(r1 - r2);
+  }
+
+  reconstructPath(cameFrom, goalKey) {
+    const path = [];
+    let cur = goalKey;
+    while (cameFrom.has(cur)) {
+      const [c, r] = cur.split(',').map(Number);
+      path.unshift({ col: c, row: r });
+      cur = cameFrom.get(cur);
+    }
+    return path;
+  }
+
+  findBestExit(grid, studentCol, studentRow, exits) {
+    if (exits.length === 0) return null;
+
+    // Ordina uscite per distanza euristica
+    const sorted = exits.map(e => ({
+      ...e,
+      dist: this.heuristic(studentCol, studentRow, e.col, e.row)
+    })).sort((a, b) => a.dist - b.dist);
+
+    // Prova A* partendo dall'uscita piu vicina
+    for (const exit of sorted) {
+      const path = this.findPath(grid, studentCol, studentRow, exit.col, exit.row);
+      if (path && path.length > 0) return path;
+    }
+    return null;
+  }
+}
+
+// ============================================================
+// SIMULATION - Motore di simulazione
+// ============================================================
+class Simulation {
+  constructor(grid, pathFinder) {
+    this.grid = grid;
+    this.pathFinder = pathFinder;
+    this.students = [];
+    this.exits = [];
+    this.ticks = 0;
+    this.eventType = null;
+    this.fireCells = new Set();
+    this.rubbleCells = new Set();
+    this.running = false;
+    this.paused = false;
+    this.speed = 1;
+    this.intervalId = null;
+    this.onTick = null;
+    this.onEnd = null;
+    this.congestionLog = new Map(); // "col,row" -> conteggio tick congestionati
+  }
+
+  setExits(exitPositions) {
+    this.exits = exitPositions;
+  }
+
+  // Assegna studenti alle sedie nelle classi
+  assignStudents() {
+    this.students = [];
+    let id = 0;
+
+    for (const room of this.grid.rooms) {
+      if (room.type !== RoomType.CLASSROOM) continue;
+
+      // Trova sedie nella stanza
+      for (let r = room.y; r < room.y + room.height; r++) {
+        for (let c = room.x; c < room.x + room.width; c++) {
+          const cell = this.grid.getCell(c, r);
+          if (cell && cell.type === CellType.CHAIR) {
+            this.students.push({
+              id: id++,
+              col: c, row: r,
+              seatCol: c, seatRow: r,
+              status: 'seated',
+              path: [],
+              pathAge: 0,
+              usedExitId: null
+            });
+            this.grid.addOccupant(c, r, this.students[this.students.length - 1].id);
+          }
+        }
+      }
+
+      // Aggiungi studenti extra su celle FLOOR libere (max 2 per classe)
+      let extra = 0;
+      for (let r = room.y; r < room.y + room.height && extra < 2; r++) {
+        for (let c = room.x; c < room.x + room.width && extra < 2; c++) {
+          const cell = this.grid.getCell(c, r);
+          if (cell && cell.type === CellType.FLOOR && cell.roomId === room.id
+              && this.grid.getOccupancy(c, r).size === 0) {
+            this.students.push({
+              id: id++,
+              col: c, row: r,
+              seatCol: c, seatRow: r,
+              status: 'seated',
+              path: [],
+              pathAge: 0,
+              usedExitId: null
+            });
+            this.grid.addOccupant(c, r, this.students[this.students.length - 1].id);
+            extra++;
+          }
+        }
+      }
+    }
+
+    // Limita a 60 studenti
+    if (this.students.length > 60) {
+      for (let i = 60; i < this.students.length; i++) {
+        this.grid.removeOccupant(this.students[i].col, this.students[i].row, this.students[i].id);
+      }
+      this.students = this.students.slice(0, 60);
+    }
+
+    console.log(`${this.students.length} studenti assegnati`);
+  }
+
+  start(eventType) {
+    this.eventType = eventType;
+    this.ticks = 0;
+    this.running = true;
+    this.paused = false;
+    this.fireCells.clear();
+    this.rubbleCells.clear();
+    this.congestionLog.clear();
+
+    // Inizializza evento
+    if (eventType === 'fire') {
+      this.initFire();
+    } else {
+      this.initEarthquake();
+    }
+
+    // Calcola percorsi iniziali - tutti gli studenti iniziano a muoversi
+    for (const student of this.students) {
+      student.status = 'moving';
+      student.path = this.pathFinder.findBestExit(this.grid, student.col, student.row, this.exits);
+      if (!student.path || student.path.length === 0) {
+        student.status = 'waiting';
+      }
+    }
+
+    this.scheduleNextTick();
+  }
+
+  scheduleNextTick() {
+    if (!this.running) return;
+    this.intervalId = setTimeout(() => {
+      if (!this.paused && this.running) {
+        this.tick();
+        this.scheduleNextTick();
+      }
+    }, CONFIG.TICK_MS / this.speed);
+  }
+
+  pause() {
+    this.paused = !this.paused;
+    if (!this.paused) this.scheduleNextTick();
+  }
+
+  setSpeed(s) {
+    this.speed = s;
+  }
+
+  stop() {
+    this.running = false;
+    if (this.intervalId) clearTimeout(this.intervalId);
+  }
+
+  initFire() {
+    // Scegli una stanza random (non corridoio)
+    const classrooms = this.grid.rooms.filter(r => r.type === RoomType.CLASSROOM);
+    if (classrooms.length === 0) return;
+    const room = classrooms[Math.floor(Math.random() * classrooms.length)];
+    const fc = room.x + Math.floor(room.width / 2);
+    const fr = room.y + Math.floor(room.height / 2);
+
+    // Piazza fuoco su 2-3 celle FLOOR
+    const fireCandidates = [];
+    for (let r = room.y; r < room.y + room.height; r++) {
+      for (let c = room.x; c < room.x + room.width; c++) {
+        const cell = this.grid.getCell(c, r);
+        if (cell && cell.type === CellType.FLOOR && this.grid.getOccupancy(c, r).size === 0) {
+          fireCandidates.push({ col: c, row: r });
+        }
+      }
+    }
+    const count = Math.min(3, fireCandidates.length);
+    for (let i = 0; i < count; i++) {
+      const idx = Math.floor(Math.random() * fireCandidates.length);
+      const fc = fireCandidates.splice(idx, 1)[0];
+      this.grid.setCell(fc.col, fc.row, CellType.FIRE);
+      this.fireCells.add(`${fc.col},${fc.row}`);
+    }
+  }
+
+  initEarthquake() {
+    // Piazza 3-6 macerie su celle FLOOR non occupate
+    const count = 3 + Math.floor(Math.random() * 4);
+    for (let i = 0; i < count; i++) {
+      this.createRubble();
+    }
+  }
+
+  tick() {
+    this.ticks++;
+
+    // 1. Eventi avversi
+    if (this.eventType === 'fire' && this.ticks % CONFIG.FIRE_SPREAD_INTERVAL === 0) {
+      this.spreadFire();
+    }
+    if (this.eventType === 'earthquake' && this.ticks % CONFIG.EARTHQUAKE_INTERVAL === 0) {
+      this.createRubble();
+    }
+
+    // 2. Ricalcola percorsi per studenti bloccati o con path vecchio
+    for (const student of this.students) {
+      if (student.status === 'evacuated' || student.status === 'trapped') continue;
+      if (student.status === 'waiting' || student.pathAge > 15 || !student.path || student.path.length === 0) {
+        const newPath = this.pathFinder.findBestExit(this.grid, student.col, student.row, this.exits);
+        if (newPath && newPath.length > 0) {
+          student.path = newPath;
+          student.pathAge = 0;
+          if (student.status !== 'injured') student.status = 'moving';
+        } else {
+          student.status = 'trapped';
+        }
+      }
+      student.pathAge++;
+    }
+
+    // 3. Muovi studenti (priorita a quelli piu vicini all'uscita)
+    const movable = this.students.filter(s =>
+      s.status === 'moving' || s.status === 'injured'
+    ).sort((a, b) => (a.path?.length || 999) - (b.path?.length || 999));
+
+    for (const student of movable) {
+      this.moveStudent(student);
+    }
+
+    // 4. Log congestione
+    for (const [key, occ] of this.grid.occupancy) {
+      if (occ.size >= 2) {
+        this.congestionLog.set(key, (this.congestionLog.get(key) || 0) + 1);
+      }
+    }
+
+    // 5. Notifica UI
+    if (this.onTick) this.onTick(this.ticks);
+
+    // 6. Condizione di fine
+    const active = this.students.filter(s =>
+      s.status !== 'evacuated' && s.status !== 'trapped'
+    );
+    if (active.length === 0 || this.ticks >= CONFIG.MAX_TICKS) {
+      this.running = false;
+      if (this.intervalId) clearTimeout(this.intervalId);
+      if (this.onEnd) this.onEnd();
+    }
+  }
+
+  moveStudent(student) {
+    if (!student.path || student.path.length === 0) {
+      if (student.status !== 'injured') student.status = 'waiting';
+      return;
+    }
+
+    const next = student.path[0];
+    const nextCell = this.grid.getCell(next.col, next.row);
+
+    // Cella non piu walkable
+    if (!nextCell || (!this.grid.isWalkable(next.col, next.row) && nextCell.type !== CellType.EXIT)) {
+      student.path = [];
+      if (student.status !== 'injured') student.status = 'waiting';
+      return;
+    }
+
+    // Controlla capienza
+    const occ = this.grid.getOccupancy(next.col, next.row).size;
+    const max = this.grid.getMaxOccupancy(next.col, next.row);
+    if (occ >= max) {
+      if (student.status !== 'injured') student.status = 'waiting';
+      return;
+    }
+
+    // Sposta
+    this.grid.removeOccupant(student.col, student.row, student.id);
+    student.col = next.col;
+    student.row = next.row;
+    this.grid.addOccupant(student.col, student.row, student.id);
+    student.path.shift();
+
+    // Cella in fiamme
+    if (nextCell.type === CellType.FIRE) {
+      student.status = 'trapped';
+      this.grid.removeOccupant(student.col, student.row, student.id);
+      return;
+    }
+
+    // Adiacente al fuoco
+    if (this.eventType === 'fire' && this.isAdjacentToFire(next.col, next.row)) {
+      student.status = 'injured';
+    }
+
+    // Uscita raggiunta
+    if (nextCell.type === CellType.EXIT) {
+      student.status = 'evacuated';
+      this.grid.removeOccupant(student.col, student.row, student.id);
+      return;
+    }
+
+    if (student.status !== 'injured') student.status = 'moving';
+  }
+
+  isAdjacentToFire(col, row) {
+    return this.grid.getNeighbors4(col, row).some(n => {
+      const c = this.grid.getCell(n.col, n.row);
+      return c && c.type === CellType.FIRE;
+    });
+  }
+
+  spreadFire() {
+    const newFire = [];
+    for (const key of this.fireCells) {
+      const [col, row] = key.split(',').map(Number);
+      const neighbors = this.grid.getNeighbors4(col, row);
+      const targets = neighbors.filter(n => {
+        const c = this.grid.getCell(n.col, n.row);
+        return c && (c.type === CellType.FLOOR || c.type === CellType.CHAIR ||
+                     c.type === CellType.DESK || c.type === CellType.WARDROBE);
+      });
+      if (targets.length > 0) {
+        newFire.push(targets[Math.floor(Math.random() * targets.length)]);
+      }
+    }
+    for (const { col, row } of newFire) {
+      this.grid.setCell(col, row, CellType.FIRE);
+      this.fireCells.add(`${col},${row}`);
+      // Invalida percorsi
+      for (const student of this.students) {
+        if (student.path && student.path.some(p => p.col === col && p.row === row)) {
+          student.path = [];
+          student.pathAge = 999;
+        }
+      }
+    }
+  }
+
+  createRubble() {
+    const candidates = [];
+    for (let r = 1; r < CONFIG.GRID_ROWS - 1; r++) {
+      for (let c = 1; c < CONFIG.GRID_COLS - 1; c++) {
+        const cell = this.grid.getCell(c, r);
+        if (cell && cell.type === CellType.FLOOR && this.grid.getOccupancy(c, r).size === 0) {
+          candidates.push({ col: c, row: r });
+        }
+      }
+    }
+    if (candidates.length === 0) return;
+    const { col, row } = candidates[Math.floor(Math.random() * candidates.length)];
+    this.grid.setCell(col, row, CellType.RUBBLE);
+    this.rubbleCells.add(`${col},${row}`);
+    for (const student of this.students) {
+      if (student.path && student.path.some(p => p.col === col && p.row === row)) {
+        student.path = [];
+        student.pathAge = 999;
+      }
+    }
+  }
+
+  getStats() {
+    const total = this.students.length;
+    const evacuated = this.students.filter(s => s.status === 'evacuated').length;
+    const moving = this.students.filter(s => s.status === 'moving').length;
+    const waiting = this.students.filter(s => s.status === 'waiting').length;
+    const trapped = this.students.filter(s => s.status === 'trapped').length;
+    const injured = this.students.filter(s => s.status === 'injured').length;
+    const seated = this.students.filter(s => s.status === 'seated').length;
+    return { total, evacuated, moving, waiting, trapped, injured, seated };
+  }
+
+  getBottlenecks() {
+    // Ordina per congestione
+    const sorted = [...this.congestionLog.entries()].sort((a, b) => b[1] - a[1]);
+    return sorted.slice(0, 5).map(([key, count]) => {
+      const [col, row] = key.split(',').map(Number);
+      const cell = this.grid.getCell(col, row);
+      const pct = Math.round((count / this.ticks) * 100);
+      let label = `Cella (${col},${row})`;
+      if (cell) {
+        if (cell.type === CellType.DOOR) label = `Porta (${col},${row})`;
+        else if (cell.roomType === RoomType.CORRIDOR) label = `Corridoio (${col},${row})`;
+      }
+      return { label, pct };
+    });
+  }
+
+  getScore() {
+    const stats = this.getStats();
+    if (stats.total === 0) return { score: 0, grade: 'F' };
+    const baseScore = (stats.evacuated / stats.total) * 100;
+    const timeBonus = Math.max(0, 40 - this.ticks / 5);
+    const penalty = stats.injured * 5 + stats.trapped * 20;
+    const score = Math.round(Math.max(0, Math.min(150, baseScore + timeBonus - penalty)));
+
+    let grade;
+    if (score >= 130) grade = 'A+';
+    else if (score >= 115) grade = 'A';
+    else if (score >= 100) grade = 'B+';
+    else if (score >= 85) grade = 'B';
+    else if (score >= 70) grade = 'C+';
+    else if (score >= 55) grade = 'C';
+    else if (score >= 40) grade = 'D';
+    else grade = 'F';
+
+    return { score, grade };
+  }
+}
+
+// ============================================================
+// RENDERER - Canvas 2D con stile planimetria
+// ============================================================
+class Renderer {
+  constructor(canvas, grid) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
+    this.grid = grid;
+    this.animTick = 0;
+
+    canvas.width = CONFIG.GRID_COLS * CONFIG.CELL_SIZE;
+    canvas.height = CONFIG.GRID_ROWS * CONFIG.CELL_SIZE;
+  }
+
+  render(state) {
+    const ctx = this.ctx;
+    const S = CONFIG.CELL_SIZE;
+    this.animTick++;
+
+    // Sfondo carta avorio
+    ctx.fillStyle = '#F8F6F0';
+    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+    // Griglia sottile
+    ctx.strokeStyle = CONFIG.COLORS.GRID_LINE;
+    ctx.lineWidth = 0.5;
+    for (let c = 0; c <= CONFIG.GRID_COLS; c++) {
+      ctx.beginPath();
+      ctx.moveTo(c * S, 0);
+      ctx.lineTo(c * S, this.canvas.height);
+      ctx.stroke();
+    }
+    for (let r = 0; r <= CONFIG.GRID_ROWS; r++) {
+      ctx.beginPath();
+      ctx.moveTo(0, r * S);
+      ctx.lineTo(this.canvas.width, r * S);
+      ctx.stroke();
+    }
+
+    // Griglia maggiore ogni 5 celle
+    ctx.strokeStyle = CONFIG.COLORS.GRID_MAJOR;
+    ctx.lineWidth = 0.8;
+    for (let c = 0; c <= CONFIG.GRID_COLS; c += 5) {
+      ctx.beginPath();
+      ctx.moveTo(c * S, 0);
+      ctx.lineTo(c * S, this.canvas.height);
+      ctx.stroke();
+    }
+    for (let r = 0; r <= CONFIG.GRID_ROWS; r += 5) {
+      ctx.beginPath();
+      ctx.moveTo(0, r * S);
+      ctx.lineTo(this.canvas.width, r * S);
+      ctx.stroke();
+    }
+
+    // Celle
+    for (let r = 0; r < CONFIG.GRID_ROWS; r++) {
+      for (let c = 0; c < CONFIG.GRID_COLS; c++) {
+        this.drawCell(ctx, c, r, S, state);
+      }
+    }
+
+    // Overlay congestione durante simulazione
+    if (state.phase === 3 && state.simulation) {
+      for (const [key, occ] of this.grid.occupancy) {
+        if (occ.size >= 2) {
+          const [col, row] = key.split(',').map(Number);
+          const max = this.grid.getMaxOccupancy(col, row);
+          const alpha = Math.min(occ.size / max, 1) * 0.4;
+          ctx.fillStyle = `rgba(239,68,68,${alpha})`;
+          ctx.fillRect(col * S, row * S, S, S);
+        }
+      }
+    }
+
+    // Highlight muri perimetrali in Fase 1
+    if (state.phase === 1) {
+      for (let r = 0; r < CONFIG.GRID_ROWS; r++) {
+        for (let c = 0; c < CONFIG.GRID_COLS; c++) {
+          if (this.grid.isPerimeterWall(c, r)) {
+            ctx.fillStyle = CONFIG.COLORS.PERIMETER_HIGHLIGHT;
+            ctx.fillRect(c * S, r * S, S, S);
+          }
+        }
+      }
+      // Hover
+      if (state.hoverCol >= 0 && state.hoverRow >= 0 &&
+          this.grid.isPerimeterWall(state.hoverCol, state.hoverRow)) {
+        ctx.fillStyle = 'rgba(34,197,94,0.6)';
+        ctx.fillRect(state.hoverCol * S, state.hoverRow * S, S, S);
+      }
+    }
+
+    // Preview arredo in Fase 2
+    if (state.phase === 2 && state.hoverCol >= 0 && state.hoverRow >= 0) {
+      const cell = this.grid.getCell(state.hoverCol, state.hoverRow);
+      if (cell && cell.type === CellType.FLOOR) {
+        ctx.globalAlpha = 0.5;
+        this.drawFurniture(ctx, state.hoverCol, state.hoverRow, S, state.selectedFurniture);
+        ctx.globalAlpha = 1;
+      }
+    }
+
+    // Studenti
+    if (state.simulation) {
+      for (const student of state.simulation.students) {
+        if (student.status === 'evacuated') continue;
+        this.drawStudent(ctx, student, S);
+      }
+    }
+  }
+
+  drawCell(ctx, col, row, S, state) {
+    const x = col * S, y = row * S;
+    const cell = this.grid.getCell(col, row);
+    if (!cell) return;
+
+    switch (cell.type) {
+      case CellType.WALL:
+        ctx.fillStyle = CONFIG.COLORS.WALL;
+        ctx.fillRect(x, y, S, S);
+        // Leggero hatch
+        ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+        ctx.lineWidth = 0.3;
+        ctx.beginPath();
+        ctx.moveTo(x, y + S);
+        ctx.lineTo(x + S, y);
+        ctx.stroke();
+        break;
+
+      case CellType.FLOOR:
+        ctx.fillStyle = this.getRoomColor(cell.roomType);
+        ctx.fillRect(x, y, S, S);
+        break;
+
+      case CellType.DOOR:
+        ctx.fillStyle = '#DDD6C8';
+        ctx.fillRect(x, y, S, S);
+        ctx.strokeStyle = CONFIG.COLORS.DOOR;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(x + S / 2, y + S / 2, S * 0.4, 0, Math.PI * 0.5);
+        ctx.stroke();
+        break;
+
+      case CellType.EXIT:
+        ctx.fillStyle = CONFIG.COLORS.EXIT;
+        ctx.fillRect(x, y, S, S);
+        // Freccia bianca
+        ctx.fillStyle = 'white';
+        ctx.beginPath();
+        ctx.moveTo(x + S * 0.3, y + S * 0.3);
+        ctx.lineTo(x + S * 0.7, y + S * 0.5);
+        ctx.lineTo(x + S * 0.3, y + S * 0.7);
+        ctx.fill();
+        break;
+
+      case CellType.DESK:
+        ctx.fillStyle = this.getRoomColor(cell.roomType);
+        ctx.fillRect(x, y, S, S);
+        this.drawFurniture(ctx, col, row, S, 'desk');
+        break;
+
+      case CellType.CHAIR:
+        ctx.fillStyle = this.getRoomColor(cell.roomType);
+        ctx.fillRect(x, y, S, S);
+        this.drawFurniture(ctx, col, row, S, 'chair');
+        break;
+
+      case CellType.WARDROBE:
+        ctx.fillStyle = this.getRoomColor(cell.roomType);
+        ctx.fillRect(x, y, S, S);
+        this.drawFurniture(ctx, col, row, S, 'wardrobe');
+        break;
+
+      case CellType.FIRE:
+        const hue = 15 + 10 * Math.sin(this.animTick * 0.15);
+        ctx.fillStyle = `hsl(${hue}, 90%, 55%)`;
+        ctx.fillRect(x, y, S, S);
+        // Fiammelle
+        ctx.fillStyle = `hsl(${hue + 20}, 95%, 65%)`;
+        ctx.beginPath();
+        ctx.moveTo(x + S * 0.2, y + S);
+        ctx.quadraticCurveTo(x + S * 0.3, y + S * 0.3, x + S * 0.5, y + S * 0.1);
+        ctx.quadraticCurveTo(x + S * 0.7, y + S * 0.3, x + S * 0.8, y + S);
+        ctx.fill();
+        break;
+
+      case CellType.RUBBLE:
+        ctx.fillStyle = CONFIG.COLORS.RUBBLE;
+        ctx.fillRect(x, y, S, S);
+        // Triangoli detriti
+        ctx.fillStyle = '#8B8580';
+        ctx.beginPath();
+        ctx.moveTo(x + 2, y + S - 2);
+        ctx.lineTo(x + S / 3, y + 4);
+        ctx.lineTo(x + S * 0.6, y + S - 2);
+        ctx.fill();
+        ctx.fillStyle = '#6B6560';
+        ctx.beginPath();
+        ctx.moveTo(x + S * 0.4, y + S - 1);
+        ctx.lineTo(x + S * 0.6, y + 3);
+        ctx.lineTo(x + S - 2, y + S - 1);
+        ctx.fill();
+        break;
+    }
+  }
+
+  drawFurniture(ctx, col, row, S, type) {
+    const x = col * S, y = row * S;
+    switch (type) {
+      case 'desk':
+        ctx.fillStyle = CONFIG.COLORS.DESK;
+        ctx.fillRect(x + 2, y + 2, S - 4, S - 4);
+        ctx.strokeStyle = '#8B4513';
+        ctx.lineWidth = 0.5;
+        ctx.strokeRect(x + 2, y + 2, S - 4, S - 4);
+        break;
+      case 'chair':
+        ctx.fillStyle = CONFIG.COLORS.CHAIR;
+        ctx.beginPath();
+        ctx.arc(x + S / 2, y + S / 2, S * 0.3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#5C3A1E';
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+        break;
+      case 'wardrobe':
+        ctx.fillStyle = CONFIG.COLORS.WARDROBE;
+        ctx.fillRect(x + 1, y + 1, S - 2, S - 2);
+        ctx.strokeStyle = '#3A2515';
+        ctx.lineWidth = 0.5;
+        ctx.strokeRect(x + 1, y + 1, S - 2, S - 2);
+        // Maniglia
+        ctx.fillStyle = '#C0A080';
+        ctx.fillRect(x + S / 2 - 1, y + S / 2 - 1, 2, 4);
+        break;
+    }
+  }
+
+  drawStudent(ctx, student, S) {
+    const cx = student.col * S + S / 2;
+    const cy = student.row * S + S / 2;
+
+    const colors = {
+      moving: '#3B82F6',
+      seated: '#6366F1',
+      waiting: '#F59E0B',
+      evacuated: '#22C55E',
+      trapped: '#EF4444',
+      injured: '#F97316'
+    };
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, S * 0.35, 0, Math.PI * 2);
+    ctx.fillStyle = colors[student.status] || '#888';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,0.25)';
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+  }
+
+  getRoomColor(roomType) {
+    switch (roomType) {
+      case RoomType.CLASSROOM: return CONFIG.COLORS.CLASSROOM;
+      case RoomType.CORRIDOR: return CONFIG.COLORS.CORRIDOR;
+      case RoomType.BATHROOM: return CONFIG.COLORS.BATHROOM;
+      case RoomType.STAIRWELL: return CONFIG.COLORS.STAIRWELL;
+      case RoomType.OFFICE: return CONFIG.COLORS.OFFICE;
+      case RoomType.ENTRANCE: return CONFIG.COLORS.ENTRANCE;
+      default: return CONFIG.COLORS.FLOOR;
+    }
+  }
+}
+
+// ============================================================
+// GAME CONTROLLER - Macchina a 4 stati
+// ============================================================
+class GameController {
+  constructor() {
+    this.canvas = document.getElementById('gameCanvas');
+    this.sidebarContent = document.getElementById('sidebar-content');
+    this.legendArea = document.getElementById('legend-area');
+    this.resultsOverlay = document.getElementById('results-overlay');
+    this.resultsCard = document.getElementById('results-card');
+
+    this.grid = null;
+    this.renderer = null;
+    this.pathFinder = new PathFinder();
+    this.simulation = null;
+    this.phase = 0;
+    this.exits = [];
+    this.selectedFurniture = 'chair';
+    this.hoverCol = -1;
+    this.hoverRow = -1;
+
+    this.setupEventListeners();
+    this.setPhase(0);
+    this.startRenderLoop();
+  }
+
+  setupEventListeners() {
+    this.canvas.addEventListener('mousemove', (e) => {
+      const rect = this.canvas.getBoundingClientRect();
+      const scaleX = this.canvas.width / rect.width;
+      const scaleY = this.canvas.height / rect.height;
+      this.hoverCol = Math.floor((e.clientX - rect.left) * scaleX / CONFIG.CELL_SIZE);
+      this.hoverRow = Math.floor((e.clientY - rect.top) * scaleY / CONFIG.CELL_SIZE);
+    });
+
+    this.canvas.addEventListener('mouseleave', () => {
+      this.hoverCol = -1;
+      this.hoverRow = -1;
+    });
+
+    this.canvas.addEventListener('click', (e) => this.handleClick(e));
+    this.canvas.addEventListener('dblclick', (e) => this.handleDblClick(e));
+  }
+
+  handleClick(e) {
+    const rect = this.canvas.getBoundingClientRect();
+    const scaleX = this.canvas.width / rect.width;
+    const scaleY = this.canvas.height / rect.height;
+    const col = Math.floor((e.clientX - rect.left) * scaleX / CONFIG.CELL_SIZE);
+    const row = Math.floor((e.clientY - rect.top) * scaleY / CONFIG.CELL_SIZE);
+
+    if (this.phase === 1) {
+      // Piazza uscita su muro perimetrale
+      if (this.grid.isPerimeterWall(col, row) && this.exits.length < CONFIG.MAX_EXITS) {
+        this.grid.setCell(col, row, CellType.EXIT);
+        this.exits.push({ col, row });
+        this.updateSidebar();
+      }
+    } else if (this.phase === 2) {
+      // Piazza arredo su cella FLOOR
+      const cell = this.grid.getCell(col, row);
+      if (cell && cell.type === CellType.FLOOR) {
+        const typeMap = { chair: CellType.CHAIR, desk: CellType.DESK, wardrobe: CellType.WARDROBE };
+        const newType = typeMap[this.selectedFurniture];
+        if (newType) {
+          this.grid.setCell(col, row, newType);
+          this.updateSidebar();
+        }
+      }
+    }
+  }
+
+  handleDblClick(e) {
+    const rect = this.canvas.getBoundingClientRect();
+    const scaleX = this.canvas.width / rect.width;
+    const scaleY = this.canvas.height / rect.height;
+    const col = Math.floor((e.clientX - rect.left) * scaleX / CONFIG.CELL_SIZE);
+    const row = Math.floor((e.clientY - rect.top) * scaleY / CONFIG.CELL_SIZE);
+
+    if (this.phase === 1) {
+      // Rimuovi uscita
+      const cell = this.grid.getCell(col, row);
+      if (cell && cell.type === CellType.EXIT) {
+        this.grid.setCell(col, row, CellType.WALL);
+        this.exits = this.exits.filter(e => e.col !== col || e.row !== row);
+        this.updateSidebar();
+      }
+    } else if (this.phase === 2) {
+      // Rimuovi arredo
+      const cell = this.grid.getCell(col, row);
+      if (cell && (cell.type === CellType.CHAIR || cell.type === CellType.DESK || cell.type === CellType.WARDROBE)) {
+        this.grid.setCell(col, row, CellType.FLOOR);
+        this.updateSidebar();
+      }
+    }
+  }
+
+  setPhase(phase) {
+    this.phase = phase;
+
+    if (phase === 0) {
+      this.canvas.style.cursor = 'default';
+    } else if (phase === 1 || phase === 2) {
+      this.canvas.style.cursor = 'crosshair';
+    } else {
+      this.canvas.style.cursor = 'default';
+    }
+
+    this.updateSidebar();
+    this.updateLegend();
+  }
+
+  generateMap() {
+    const gen = new FloorPlanGenerator();
+    this.grid = gen.generate();
+    this.renderer = new Renderer(this.canvas, this.grid);
+    this.exits = [];
+    this.simulation = null;
+    this.resultsOverlay.classList.remove('visible');
+  }
+
+  updateSidebar() {
+    let html = '';
+    switch (this.phase) {
+      case 0:
+        html = `
+          <div class="phase-info">
+            <h3>Benvenuto in SchoolSafe</h3>
+            <p>Genera una planimetria scolastica casuale, posiziona le uscite di sicurezza e arreda le classi.
+            Poi guarda gli studenti evacuare durante un'emergenza!</p>
+          </div>
+          <button class="btn btn-primary" onclick="game.onGenerate()">Genera nuovo edificio</button>
+        `;
+        break;
+
+      case 1:
+        html = `
+          <div class="phase-info">
+            <h3>Fase 1: Uscite di Sicurezza</h3>
+            <p>Clicca sui muri perimetrali (evidenziati in verde) per posizionare le uscite di sicurezza.</p>
+            <p style="margin-top:6px; font-size:11px; color:#aaa;">Doppio clic su un'uscita per rimuoverla.</p>
+          </div>
+          <div class="stat-grid">
+            <div class="stat-box">
+              <div class="label">Uscite</div>
+              <div class="value ${this.exits.length >= CONFIG.MIN_EXITS ? 'green' : 'yellow'}">${this.exits.length}</div>
+            </div>
+            <div class="stat-box">
+              <div class="label">Max</div>
+              <div class="value">${CONFIG.MAX_EXITS}</div>
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="game.onNextPhase()"
+            ${this.exits.length < CONFIG.MIN_EXITS ? 'disabled' : ''}>
+            Arreda le classi &rarr;
+          </button>
+          ${this.exits.length < CONFIG.MIN_EXITS ? `<p style="font-size:11px; color:#f59e0b; margin-top:6px;">Piazza almeno ${CONFIG.MIN_EXITS} uscite per proseguire.</p>` : ''}
+        `;
+        break;
+
+      case 2:
+        const chairCount = this.countFurniture(CellType.CHAIR);
+        const deskCount = this.countFurniture(CellType.DESK);
+        const wardrobeCount = this.countFurniture(CellType.WARDROBE);
+
+        html = `
+          <div class="phase-info">
+            <h3>Fase 2: Arredamento</h3>
+            <p>Seleziona un elemento e clicca nelle stanze per posizionarlo. Ogni sedia = 1 studente!</p>
+            <p style="margin-top:6px; font-size:11px; color:#aaa;">Doppio clic su un arredo per rimuoverlo.</p>
+          </div>
+          <div class="furniture-selector">
+            <div class="furniture-btn ${this.selectedFurniture === 'chair' ? 'active' : ''}"
+                 onclick="game.selectFurniture('chair')">
+              Sedia [S]
+            </div>
+            <div class="furniture-btn ${this.selectedFurniture === 'desk' ? 'active' : ''}"
+                 onclick="game.selectFurniture('desk')">
+              Cattedra [C]
+            </div>
+            <div class="furniture-btn ${this.selectedFurniture === 'wardrobe' ? 'active' : ''}"
+                 onclick="game.selectFurniture('wardrobe')">
+              Armadio [A]
+            </div>
+          </div>
+          <div class="stat-grid">
+            <div class="stat-box">
+              <div class="label">Sedie</div>
+              <div class="value blue">${chairCount}</div>
+            </div>
+            <div class="stat-box">
+              <div class="label">Cattedre</div>
+              <div class="value">${deskCount}</div>
+            </div>
+          </div>
+          ${this.getRoomSeatsHtml()}
+          <button class="btn btn-primary" onclick="game.onNextPhase()"
+            ${chairCount === 0 ? 'disabled' : ''}>
+            Avvia simulazione &rarr;
+          </button>
+          ${chairCount === 0 ? '<p style="font-size:11px; color:#f59e0b; margin-top:6px;">Piazza almeno una sedia per proseguire.</p>' : ''}
+        `;
+        break;
+
+      case 3:
+        if (!this.simulation || !this.simulation.running) {
+          html = `
+            <div class="phase-info">
+              <h3>Fase 3: Emergenza!</h3>
+              <p>Scegli il tipo di evento avverso per avviare la simulazione di evacuazione.</p>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <button class="btn btn-event btn-fire" onclick="game.startSimulation('fire')">Incendio</button>
+              <button class="btn btn-event btn-earthquake" onclick="game.startSimulation('earthquake')">Terremoto</button>
+            </div>
+          `;
+        } else {
+          const stats = this.simulation.getStats();
+          const pct = stats.total > 0 ? Math.round(stats.evacuated / stats.total * 100) : 0;
+          const timePct = Math.round(this.simulation.ticks / CONFIG.MAX_TICKS * 100);
+          html = `
+            <div class="phase-info">
+              <h3>Evacuazione in corso</h3>
+              <p>Evento: <strong>${this.simulation.eventType === 'fire' ? 'Incendio' : 'Terremoto'}</strong></p>
+            </div>
+            <div class="progress-bar"><div class="fill" style="width:${timePct}%"></div></div>
+            <div style="text-align:center; font-family:'Courier New'; font-size:12px; color:#888; margin-bottom:8px;">
+              Tick ${this.simulation.ticks} / ${CONFIG.MAX_TICKS}
+            </div>
+            <div class="stat-grid">
+              <div class="stat-box">
+                <div class="label">Evacuati</div>
+                <div class="value green">${stats.evacuated}/${stats.total}</div>
+              </div>
+              <div class="stat-box">
+                <div class="label">Percentuale</div>
+                <div class="value ${pct >= 80 ? 'green' : pct >= 50 ? 'yellow' : 'red'}">${pct}%</div>
+              </div>
+              <div class="stat-box">
+                <div class="label">In movimento</div>
+                <div class="value blue">${stats.moving}</div>
+              </div>
+              <div class="stat-box">
+                <div class="label">In attesa</div>
+                <div class="value yellow">${stats.waiting}</div>
+              </div>
+              <div class="stat-box">
+                <div class="label">Bloccati</div>
+                <div class="value red">${stats.trapped}</div>
+              </div>
+              <div class="stat-box">
+                <div class="label">Feriti</div>
+                <div class="value red">${stats.injured}</div>
+              </div>
+            </div>
+            <div class="speed-controls">
+              <div class="speed-btn ${this.simulation.speed === 1 ? 'active' : ''}" onclick="game.setSpeed(1)">1x</div>
+              <div class="speed-btn ${this.simulation.speed === 2 ? 'active' : ''}" onclick="game.setSpeed(2)">2x</div>
+              <div class="speed-btn ${this.simulation.speed === 4 ? 'active' : ''}" onclick="game.setSpeed(4)">4x</div>
+            </div>
+            <button class="btn btn-secondary" onclick="game.togglePause()">
+              ${this.simulation.paused ? 'Riprendi' : 'Pausa'}
+            </button>
+          `;
+        }
+        break;
+    }
+    this.sidebarContent.innerHTML = html;
+  }
+
+  updateLegend() {
+    const items = [
+      { color: CONFIG.COLORS.WALL, label: 'Muro' },
+      { color: CONFIG.COLORS.CLASSROOM, label: 'Aula' },
+      { color: CONFIG.COLORS.CORRIDOR, label: 'Corridoio' },
+      { color: CONFIG.COLORS.BATHROOM, label: 'Bagno' },
+      { color: '#DDD6C8', label: 'Porta' },
+      { color: CONFIG.COLORS.EXIT, label: 'Uscita' },
+    ];
+
+    if (this.phase >= 2) {
+      items.push(
+        { color: CONFIG.COLORS.DESK, label: 'Cattedra' },
+        { color: CONFIG.COLORS.CHAIR, label: 'Sedia' },
+        { color: CONFIG.COLORS.WARDROBE, label: 'Armadio' },
+      );
+    }
+
+    if (this.phase === 3) {
+      items.push(
+        { color: '#3B82F6', label: 'Studente in movimento' },
+        { color: '#F59E0B', label: 'Studente in attesa' },
+        { color: '#EF4444', label: 'Studente bloccato' },
+      );
+    }
+
+    this.legendArea.innerHTML = items.map(i => `
+      <div class="legend-item">
+        <div class="legend-dot" style="background:${i.color}"></div>
+        <span>${i.label}</span>
+      </div>
+    `).join('');
+  }
+
+  countFurniture(type) {
+    if (!this.grid) return 0;
+    let count = 0;
+    for (let r = 0; r < CONFIG.GRID_ROWS; r++) {
+      for (let c = 0; c < CONFIG.GRID_COLS; c++) {
+        const cell = this.grid.getCell(c, r);
+        if (cell && cell.type === type) count++;
+      }
+    }
+    return count;
+  }
+
+  getRoomSeatsHtml() {
+    if (!this.grid) return '';
+    const roomSeats = {};
+    for (const room of this.grid.rooms) {
+      if (room.type !== RoomType.CLASSROOM) continue;
+      let seats = 0;
+      for (let r = room.y; r < room.y + room.height; r++) {
+        for (let c = room.x; c < room.x + room.width; c++) {
+          const cell = this.grid.getCell(c, r);
+          if (cell && cell.type === CellType.CHAIR && cell.roomId === room.id) seats++;
+        }
+      }
+      if (seats > 0 || room.type === RoomType.CLASSROOM) {
+        roomSeats[room.id] = { name: `Aula ${room.id + 1}`, seats };
+      }
+    }
+
+    const entries = Object.values(roomSeats);
+    if (entries.length === 0) return '';
+
+    return `<div class="room-list">${entries.map(e =>
+      `<div>${e.name}: <strong>${e.seats}</strong> sedie</div>`
+    ).join('')}</div>`;
+  }
+
+  // Azioni utente
+  onGenerate() {
+    this.generateMap();
+    this.setPhase(1);
+  }
+
+  onNextPhase() {
+    if (this.phase === 1 && this.exits.length >= CONFIG.MIN_EXITS) {
+      this.setPhase(2);
+    } else if (this.phase === 2 && this.countFurniture(CellType.CHAIR) > 0) {
+      this.setPhase(3);
+    }
+  }
+
+  selectFurniture(type) {
+    this.selectedFurniture = type;
+    this.updateSidebar();
+  }
+
+  startSimulation(eventType) {
+    this.simulation = new Simulation(this.grid, this.pathFinder);
+    this.simulation.setExits(this.exits);
+    this.simulation.assignStudents();
+    this.simulation.onTick = () => this.updateSidebar();
+    this.simulation.onEnd = () => this.showResults();
+    this.simulation.start(eventType);
+    this.updateSidebar();
+    this.updateLegend();
+  }
+
+  togglePause() {
+    if (this.simulation) {
+      this.simulation.pause();
+      this.updateSidebar();
+    }
+  }
+
+  setSpeed(s) {
+    if (this.simulation) {
+      this.simulation.setSpeed(s);
+      this.updateSidebar();
+    }
+  }
+
+  showResults() {
+    const stats = this.simulation.getStats();
+    const { score, grade } = this.simulation.getScore();
+    const bottlenecks = this.simulation.getBottlenecks();
+    const pct = stats.total > 0 ? Math.round(stats.evacuated / stats.total * 100) : 0;
+    const timeSec = (this.simulation.ticks * CONFIG.TICK_MS / 1000).toFixed(1);
+
+    let gradeColor;
+    if (score >= 100) gradeColor = '#22c55e';
+    else if (score >= 70) gradeColor = '#f59e0b';
+    else gradeColor = '#ef4444';
+
+    // Suggerimenti
+    const suggestions = [];
+    if (this.exits.length <= 2) suggestions.push('Posiziona piu uscite per distribuire il flusso.');
+    if (bottlenecks.length > 0 && bottlenecks[0].pct > 50) {
+      suggestions.push(`${bottlenecks[0].label} era congestionato — prova a distanziare gli arredi.`);
+    }
+    if (stats.trapped > 0) suggestions.push('Alcuni studenti sono rimasti bloccati — verifica i percorsi verso le uscite.');
+    if (pct < 80) suggestions.push('Prova ad aggiungere uscite su lati diversi dell\'edificio.');
+    if (suggestions.length === 0) suggestions.push('Ottimo lavoro! La tua pianificazione e\' stata efficace.');
+
+    this.resultsCard.innerHTML = `
+      <h2>RAPPORTO EVACUAZIONE</h2>
+      <hr class="divider">
+      <div class="stat-line"><span>Evacuati:</span><span>${stats.evacuated} / ${stats.total} (${pct}%)</span></div>
+      <div class="stat-line"><span>Feriti:</span><span>${stats.injured}</span></div>
+      <div class="stat-line"><span>Intrappolati:</span><span>${stats.trapped}</span></div>
+      <div class="stat-line"><span>Tempo:</span><span>${timeSec} secondi (${this.simulation.ticks} tick)</span></div>
+      <hr class="divider">
+      <div class="score-line" style="color:${gradeColor}">
+        PUNTEGGIO: ${score} / 150 &nbsp;[${grade}]
+      </div>
+      <hr class="divider">
+      ${bottlenecks.length > 0 ? `
+        <div style="font-size:12px; color:#aaa; margin-bottom:4px;">COLLI DI BOTTIGLIA:</div>
+        ${bottlenecks.map(b => `<div style="font-size:12px; padding:2px 0;">&bull; ${b.label} (${b.pct}%)</div>`).join('')}
+        <hr class="divider">
+      ` : ''}
+      <div class="suggestions">
+        <div style="color:#aaa; margin-bottom:4px;">SUGGERIMENTI:</div>
+        ${suggestions.map(s => `<div>&bull; ${s}</div>`).join('')}
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="game.newGame()">Nuova partita</button>
+        <button class="btn btn-secondary" onclick="game.sameBuilding()">Stesso edificio</button>
+      </div>
+    `;
+
+    this.resultsOverlay.classList.add('visible');
+    this.updateSidebar();
+  }
+
+  newGame() {
+    if (this.simulation) this.simulation.stop();
+    this.resultsOverlay.classList.remove('visible');
+    this.setPhase(0);
+  }
+
+  sameBuilding() {
+    if (this.simulation) this.simulation.stop();
+    this.resultsOverlay.classList.remove('visible');
+
+    // Ripristina celle fire/rubble a FLOOR
+    for (let r = 0; r < CONFIG.GRID_ROWS; r++) {
+      for (let c = 0; c < CONFIG.GRID_COLS; c++) {
+        const cell = this.grid.getCell(c, r);
+        if (cell && (cell.type === CellType.FIRE || cell.type === CellType.RUBBLE)) {
+          this.grid.setCell(c, r, CellType.FLOOR);
+        }
+      }
+    }
+    this.grid.occupancy.clear();
+    this.simulation = null;
+    this.setPhase(3);
+  }
+
+  startRenderLoop() {
+    const loop = () => {
+      if (this.renderer) {
+        this.renderer.render({
+          phase: this.phase,
+          hoverCol: this.hoverCol,
+          hoverRow: this.hoverRow,
+          selectedFurniture: this.selectedFurniture,
+          simulation: this.simulation
+        });
+      }
+      requestAnimationFrame(loop);
+    };
+    requestAnimationFrame(loop);
+  }
+}
+
+// ============================================================
+// Scorciatoie tastiera
+// ============================================================
+document.addEventListener('keydown', (e) => {
+  if (!window.game) return;
+  if (game.phase === 2) {
+    if (e.key === 's' || e.key === 'S') game.selectFurniture('chair');
+    if (e.key === 'c' || e.key === 'C') game.selectFurniture('desk');
+    if (e.key === 'a' || e.key === 'A') game.selectFurniture('wardrobe');
+  }
+  if (e.key === ' ' && game.phase === 3 && game.simulation?.running) {
+    e.preventDefault();
+    game.togglePause();
+  }
+});
+
+// ============================================================
+// AVVIO
+// ============================================================
+const game = new GameController();
+</script>
+
+</body>
+</html>
